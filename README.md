@@ -139,21 +139,8 @@ pip3 install plotly seaborn
 
 ## クラウド連携
 pip3 install boto3
-
-pip3 freeze > requirements.txt
 ```
 
-また、必要に応じて個別のパッケージを以下のようにインストールすることも可能です。
-
-```bash
-pip3 install numpy
-pip3 install scikit-learn
-pip3 install tensorflow
-pip3 install tf2onnx
-pip3 install onnxruntime
-```
-
----
 
 ## 注意事項
 
