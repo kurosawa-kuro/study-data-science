@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# set -e : コマンドのreturn_codeが0以外だったら終了
-# set -x : デバッグログを表示
+# set -e : Exit if a command returns a non-zero status.
+# set -x : Display debugging output.
 set -ex
 
-# このスクリプトの絶対パス
+# Get the absolute path of this script.
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
-# プロジェクトルートの絶対パス
+# Get the absolute path of the project root.
 ROOT_DIR=$(cd $(dirname $0)/..; pwd)
 
 cd $ROOT_DIR
 
-# SQLiteデータベースファイルを削除
-rm -f $ROOT_DIR/mydatabase.db
+# For PostgreSQL, we do not need to remove a local SQLite database file.
+# If needed, you can add commands to drop and recreate the PostgreSQL database here.
 
-# マイグレーション
+# Run migration using Alembic.
 alembic upgrade head
 
-# 初期ユーザー作成
+# Create initial users.
 PASSWD="admin"
 python api/manage.py create-user sys_admin -r SYSTEM_ADMIN -p $PASSWD
 python api/manage.py create-user loc_admin -r LOCATION_ADMIN -p $PASSWD
