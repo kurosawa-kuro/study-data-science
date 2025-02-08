@@ -240,3 +240,24 @@ CREATE TABLE IF NOT EXISTS `users` (
   `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY (`username`)
 );
+
+
+
+
+```bash
+# 仮想環境の作成
+python3 -m venv myenv
+
+# 仮想環境の有効化
+source myenv/bin/activate
+```
+
+
+```bash
+pip3 install -r requirements.txt
+
+uvicorn main:app --reload
+```
+
+pip freeze > requirements.txt
+deactivate

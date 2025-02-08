@@ -4,9 +4,9 @@ from sqlalchemy.orm import sessionmaker
 from env import Environment
 
 env = Environment()
-# For SQLite, no need for user/password/host/port so we use a file based DB.
-SQLALCHEMY_DATABASE_URL = "sqlite:///./mydatabase.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# PostgreSQLの接続URL
+SQLALCHEMY_DATABASE_URL = "postgresql://dbmasteruser:dbmaster@ls-644e915cc7a6ba69ccf824a69cef04d45c847ed5.cps8g04q216q.ap-northeast-1.rds.amazonaws.com:5432/dbmaster?sslmode=require"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
 def get_session():
