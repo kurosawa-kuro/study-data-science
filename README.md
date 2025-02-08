@@ -228,3 +228,15 @@ uvicorn main:app --reload
 以上の手順に従うことで、データ分析及びML開発に最適な環境が整い、効率的な開発作業が可能となります。
 
 pip install -r requirements.txt
+
+
+
+-- テーブルを作成
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `hashed_password` varchar(255) NOT NULL,
+  `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY (`username`)
+);
