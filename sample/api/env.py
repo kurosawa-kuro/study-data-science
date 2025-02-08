@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field  # Use pydantic's Field for aliasing
 
 class Environment(BaseSettings):
     """環境変数を定義する構造体。
@@ -14,8 +15,15 @@ class Environment(BaseSettings):
     token_secret_key: str = "1234567890"
     token_algorithm: str = "HS256"
 
-# PostgreSQL connection string example
-SQLALCHEMY_DATABASE_URL = (
-    "postgresql://dbmasteruser:dbmaster@ls-644e915cc7a6ba69ccf824a69cef04d45c847ed5.cps8g04q216q.ap-northeast-1.rds.amazonaws.com:5432/dbmaster"
-    "?sslmode=require"
-)
+    db_url: str = Field(..., env="DB_URL")
+
+    class Config:
+        env_file = "../.env"
+        env_file_encoding = "utf-8"
+        extra = "ignore"  # .env に定義されている不要な変数は無視する
+
+# Instantiate the settings from the .env file.
+env = Environment()
+
+# This variable is used across the app for creating the database engine.
+SQLALCHEMY_DATABASE_URL = env.db_url

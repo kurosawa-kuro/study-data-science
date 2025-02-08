@@ -1,11 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from env import Environment
+from env import Environment  # 環境変数設定のためのクラスを読み込み
 
 env = Environment()
-# PostgreSQLの接続URL
-SQLALCHEMY_DATABASE_URL = "postgresql://dbmasteruser:dbmaster@ls-644e915cc7a6ba69ccf824a69cef04d45c847ed5.cps8g04q216q.ap-northeast-1.rds.amazonaws.com:5432/dbmaster?sslmode=require"
+# Use the database connection string from the environment variables.
+SQLALCHEMY_DATABASE_URL = env.db_url
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
