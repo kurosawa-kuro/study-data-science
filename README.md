@@ -244,20 +244,21 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 
 
-```bash
-# 仮想環境の作成
+# 開発環境セットアップ
+## 仮想環境
 python3 -m venv myenv
-
-# 仮想環境の有効化
 source myenv/bin/activate
-```
+pip3 install --upgrade pip setuptools wheel
 
-
-```bash
+## パッケージインストール
 pip3 install -r requirements.txt
 
-uvicorn main:app --reload
-```
-
+## 依存関係の更新
 pip freeze > requirements.txt
+
+# アプリケーション実行
+cd api
+uvicorn main:app --reload
+
+# 終了時
 deactivate
