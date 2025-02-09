@@ -1,0 +1,35 @@
+@localHost = localhost
+@port = 3000
+
+### Base URLs
+@localBaseUrl = http://{{localHost}}:{{port}}
+
+
+### /
+GET {{localBaseUrl}}/
+
+
+### POST /api/v1/microposts
+POST {{localBaseUrl}}/api/v1/microposts
+Content-Type: application/json
+
+{
+    "title": "Hello, World!"
+}
+
+### GET /api/v1/microposts
+GET {{localBaseUrl}}/api/v1/microposts
+
+### GET /api/v1/microposts
+GET {{localBaseUrl}}/api/v1/microposts/1
+
+
+
+
+
+
+
+
+
+
+

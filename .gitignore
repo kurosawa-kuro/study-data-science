@@ -173,3 +173,6 @@ cython_debug/
 
 myenv
 README secret.md
+**/node_modules/**
+**/node_modules/
+/node_modules/
