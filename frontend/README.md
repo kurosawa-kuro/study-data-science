@@ -17,3 +17,17 @@ uvicorn main:app --reload
 
 # 終了時
 deactivate
+
+pip3 install notebook
+pip3 install streamlit
+pip3 install gradio
+
+jupyter notebook
+
+streamlit run streamlit_micropost.py
+
+python gradio_micropost.py
+
+
+
+
