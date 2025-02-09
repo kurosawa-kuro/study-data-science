@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Path to the db.json file. Adjust the path if needed.
-const DB_PATH = path.join(__dirname, 'db.json');
+const DB_PATH = path.join(__dirname, '../database/db.json');
 
 /**
  * Reads the db.json file.

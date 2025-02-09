@@ -8,7 +8,6 @@
 ### /
 GET {{localBaseUrl}}/
 
-
 ### POST /api/v1/microposts
 POST {{localBaseUrl}}/api/v1/microposts
 Content-Type: application/json
