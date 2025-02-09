@@ -1,0 +1,32 @@
+{
+  "microposts": [
+    {
+      "id": 1,
+      "title": "Hello, World!"
+    },
+    {
+      "id": 2,
+      "title": "Hello, World!"
+    },
+    {
+      "id": 3,
+      "title": "Hello, World!"
+    },
+    {
+      "id": 4,
+      "title": "Hello, World!"
+    },
+    {
+      "id": 5,
+      "title": "Hello, World!"
+    },
+    {
+      "id": 6,
+      "title": "Hello, World!"
+    },
+    {
+      "id": 7,
+      "title": "Hello, World!"
+    }
+  ]
+}
