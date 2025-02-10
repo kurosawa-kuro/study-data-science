@@ -115,12 +115,14 @@ def chat(user_message: str, history: Optional[ConversationHistory]) -> Tuple[Con
 # Set up Gradio UI components.
 with gr.Blocks() as demo:
     gr.Markdown("# AI Chatbot")
+    # 表示用のマークダウンコンポーネントで、使用中のAPIプロバイダーをユーザーに明示
+    gr.Markdown(f"**使用中のAIモデル API:** {api_provider.upper()}")
     # Chatbot UI component to display conversation history.
     chatbot = gr.Chatbot(label="Chatbot")
     # Text input component.
     text_input = gr.Textbox(
-        label="Your Message", 
-        placeholder="Type your message here...", 
+        label="Your Message",
+        placeholder="Type your message here...",
         interactive=True
     )
     # State component to manage conversation history.
