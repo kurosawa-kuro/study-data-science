@@ -2,14 +2,33 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from database import engine
 
+# --- 共通のヘルパー関数 ---
+def execute_db_query(query: text, params: dict = None, commit: bool = False, fetch: str = "none"):
+    """
+    Execute a SQL query, optionally commit, and fetch results.
+    
+    :param query: SQL query string.
+    :param params: Dictionary of parameters for the query.
+    :param commit: Whether to commit the transaction.
+    :param fetch: 'one' for single record, 'all' for all records, 'none' for no fetch.
+    :return: Fetched result(s) if applicable.
+    """
+    with engine.connect() as conn:
+        result = conn.execute(query, params or {})
+        data = None
+        if fetch == "one":
+            data = result.fetchone()
+        elif fetch == "all":
+            data = result.fetchall()
+        if commit:
+            conn.commit()
+    return data
+
 # --- Category Functions ---
 def create_category(name: str):
     # Insert a new category and return the created record.
     query = text("INSERT INTO categories (name) VALUES (:name) RETURNING *")
-    with engine.connect() as conn:
-        result = conn.execute(query, {"name": name})
-        category = result.fetchone()
-        conn.commit()
+    category = execute_db_query(query, {"name": name}, commit=True, fetch="one")
     if category is None:
         raise HTTPException(status_code=500, detail="Category creation failed")
     return dict(category._mapping)
@@ -17,17 +36,13 @@ def create_category(name: str):
 def list_categories():
     # Retrieve all categories.
     query = text("SELECT * FROM categories")
-    with engine.connect() as conn:
-        result = conn.execute(query)
-        categories = result.fetchall()
+    categories = execute_db_query(query, fetch="all")
     return [dict(category._mapping) for category in categories]
 
 def get_category(category_id: int):
     # Retrieve a category by its id.
     query = text("SELECT * FROM categories WHERE id = :id")
-    with engine.connect() as conn:
-        result = conn.execute(query, {"id": category_id})
-        category = result.fetchone()
+    category = execute_db_query(query, {"id": category_id}, fetch="one")
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     return dict(category._mapping)
@@ -36,10 +51,7 @@ def get_category(category_id: int):
 def create_user(name: str):
     # Insert a new user and return the created record.
     query = text("INSERT INTO users (name) VALUES (:name) RETURNING *")
-    with engine.connect() as conn:
-        result = conn.execute(query, {"name": name})
-        user = result.fetchone()
-        conn.commit()
+    user = execute_db_query(query, {"name": name}, commit=True, fetch="one")
     if user is None:
         raise HTTPException(status_code=500, detail="User creation failed")
     return dict(user._mapping)
@@ -47,17 +59,13 @@ def create_user(name: str):
 def list_users():
     # Retrieve all users.
     query = text("SELECT * FROM users")
-    with engine.connect() as conn:
-        result = conn.execute(query)
-        users = result.fetchall()
+    users = execute_db_query(query, fetch="all")
     return [dict(user._mapping) for user in users]
 
 def get_user(user_id: int):
     # Retrieve a user by its id.
     query = text("SELECT * FROM users WHERE id = :id")
-    with engine.connect() as conn:
-        result = conn.execute(query, {"id": user_id})
-        user = result.fetchone()
+    user = execute_db_query(query, {"id": user_id}, fetch="one")
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return dict(user._mapping)
@@ -66,10 +74,7 @@ def get_user(user_id: int):
 def create_micropost(content: str, user_id: int):
     # Insert a new micropost and associate it with a user.
     query = text("INSERT INTO microposts (content, user_id) VALUES (:content, :user_id) RETURNING *")
-    with engine.connect() as conn:
-        result = conn.execute(query, {"content": content, "user_id": user_id})
-        micropost = result.fetchone()
-        conn.commit()
+    micropost = execute_db_query(query, {"content": content, "user_id": user_id}, commit=True, fetch="one")
     if micropost is None:
         raise HTTPException(status_code=500, detail="Micropost creation failed")
     return dict(micropost._mapping)
@@ -77,17 +82,13 @@ def create_micropost(content: str, user_id: int):
 def list_microposts():
     # Retrieve all microposts.
     query = text("SELECT * FROM microposts")
-    with engine.connect() as conn:
-        result = conn.execute(query)
-        microposts = result.fetchall()
+    microposts = execute_db_query(query, fetch="all")
     return [dict(micropost._mapping) for micropost in microposts]
 
 def get_micropost(micropost_id: int):
     # Retrieve a micropost by its id.
     query = text("SELECT * FROM microposts WHERE id = :id")
-    with engine.connect() as conn:
-        result = conn.execute(query, {"id": micropost_id})
-        micropost = result.fetchone()
+    micropost = execute_db_query(query, {"id": micropost_id}, fetch="one")
     if not micropost:
         raise HTTPException(status_code=404, detail="Micropost not found")
     return dict(micropost._mapping)
@@ -99,26 +100,19 @@ def link_micropost_category(micropost_id: int, category_id: int):
     """
     # Verify if the specified category exists.
     query_category = text("SELECT * FROM categories WHERE id = :id")
-    with engine.connect() as conn:
-        result_category = conn.execute(query_category, {"id": category_id})
-        category = result_category.fetchone()
+    category = execute_db_query(query_category, {"id": category_id}, fetch="one")
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
     # Verify if the specified micropost exists.
     query_micropost = text("SELECT * FROM microposts WHERE id = :id")
-    with engine.connect() as conn:
-        result_micropost = conn.execute(query_micropost, {"id": micropost_id})
-        micropost = result_micropost.fetchone()
+    micropost = execute_db_query(query_micropost, {"id": micropost_id}, fetch="one")
     if not micropost:
         raise HTTPException(status_code=404, detail="Micropost not found")
 
     # Create link between micropost and category.
     query_link = text("INSERT INTO micropost_categories (micropost_id, category_id) VALUES (:micropost_id, :category_id) RETURNING *")
-    with engine.connect() as conn:
-        result_link = conn.execute(query_link, {"micropost_id": micropost_id, "category_id": category_id})
-        link = result_link.fetchone()
-        conn.commit()
+    link = execute_db_query(query_link, {"micropost_id": micropost_id, "category_id": category_id}, commit=True, fetch="one")
     if link is None:
         raise HTTPException(status_code=500, detail="Link creation failed")
     return dict(link._mapping)
@@ -126,9 +120,7 @@ def link_micropost_category(micropost_id: int, category_id: int):
 def list_micropost_category_links():
     # Retrieve all micropost-category links.
     query = text("SELECT * FROM micropost_categories")
-    with engine.connect() as conn:
-        result = conn.execute(query)
-        links = result.fetchall()
+    links = execute_db_query(query, fetch="all")
     return [dict(link._mapping) for link in links]
 
 def get_categories_for_micropost(micropost_id: int):
@@ -138,9 +130,7 @@ def get_categories_for_micropost(micropost_id: int):
         JOIN micropost_categories mc ON c.id = mc.category_id 
         WHERE mc.micropost_id = :micropost_id
     """)
-    with engine.connect() as conn:
-        result = conn.execute(query, {"micropost_id": micropost_id})
-        categories = result.fetchall()
+    categories = execute_db_query(query, {"micropost_id": micropost_id}, fetch="all")
     return [dict(category._mapping) for category in categories]
 
 def get_microposts_for_category(category_id: int):
@@ -150,7 +140,5 @@ def get_microposts_for_category(category_id: int):
         JOIN micropost_categories mc ON m.id = mc.micropost_id 
         WHERE mc.category_id = :category_id
     """)
-    with engine.connect() as conn:
-        result = conn.execute(query, {"category_id": category_id})
-        microposts = result.fetchall()
+    microposts = execute_db_query(query, {"category_id": category_id}, fetch="all")
     return [dict(micropost._mapping) for micropost in microposts]
