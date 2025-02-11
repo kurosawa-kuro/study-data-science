@@ -1,0 +1,98 @@
+@localHost = localhost
+@port = 8000
+
+### Base URL
+@localBaseUrl = http://{{localHost}}:{{port}}
+
+### ホーム（GET /）
+# There is no explicit home endpoint defined; this may return 404.
+GET {{localBaseUrl}}/
+
+### Users エンドポイント
+#### GET /users
+# Read All: Retrieve all users.
+GET {{localBaseUrl}}/users
+
+#### POST /users
+# Create a new user. Expects "name" as a parameter.
+POST {{localBaseUrl}}/users
+Content-Type: application/json
+
+{
+    "name": "Alice"
+}
+
+#### GET /users/{user_id}
+# Retrieve a user by its ID.
+GET {{localBaseUrl}}/users/1
+
+### Microposts エンドポイント
+#### POST /microposts
+# Create a new micropost. Expects "content" and "user_id" as parameters.
+POST {{localBaseUrl}}/microposts
+Content-Type: application/json
+
+{
+    "content": "This is a sample micropost.",
+    "user_id": 1
+}
+
+#### GET /microposts
+# Read All: Retrieve all microposts.
+GET {{localBaseUrl}}/microposts
+
+#### GET /microposts/{micropost_id}
+# Retrieve a micropost by its ID.
+GET {{localBaseUrl}}/microposts/1
+
+### Categories エンドポイント
+#### GET /categories
+# Read All: Retrieve all categories.
+GET {{localBaseUrl}}/categories
+
+#### POST /categories
+# Create a new category. Expects "name" as a parameter.
+POST {{localBaseUrl}}/categories
+Content-Type: application/json
+
+{
+    "name": "Technology"
+}
+
+#### GET /categories/{category_id}
+# Retrieve a category by its ID.
+GET {{localBaseUrl}}/categories/1
+
+### Micropost-Categories エンドポイント
+#### POST /micropost-categories
+# Link a micropost with a category. Expects "micropost_id" and "category_id".
+POST {{localBaseUrl}}/micropost-categories
+Content-Type: application/json
+
+{
+    "micropost_id": 1,
+    "category_id": 1
+}
+
+#### GET /micropost-categories
+# Read All: Retrieve all micropost-category links.
+GET {{localBaseUrl}}/micropost-categories
+
+#### GET /micropost-categories/micropost/{micropost_id}
+# Retrieve all categories associated with a specified micropost.
+GET {{localBaseUrl}}/micropost-categories/micropost/1
+
+#### GET /micropost-categories/category/{category_id}
+# Retrieve all microposts associated with a specified category.
+GET {{localBaseUrl}}/micropost-categories/category/1
+
+
+
+
+
+
+
+
+
+
+
