@@ -26,7 +26,7 @@ jupyter notebook
 
 streamlit run streamlit_micropost.py
 
-python gradio_micropost.py
+python gradio/gradio_chatbot.py
 
 
 

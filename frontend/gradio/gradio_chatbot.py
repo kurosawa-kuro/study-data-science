@@ -1,122 +1,134 @@
 import os
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Literal
 from dotenv import load_dotenv  # Load environment variables from .env file.
 import gradio as gr
 import openai
 
+# Constant flag for DeepSeek model selection.
+# Set to True to use 'deepseek-chat', or False to use 'deepseek-reasoner'
+USE_DEEPSEEK_CHAT_MODEL: bool = False
+
 # Data type for conversation history
 ConversationHistory = List[Tuple[str, str]]
 
-def load_configuration() -> Tuple[Optional[str], str]:
-    """
-    Load configuration from .env file and return DeepSeek API key and selected API provider.
-    """
-    dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-    load_dotenv(dotenv_path)
-    # Set OpenAI API key from env variable.
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    # Retrieve DeepSeek API key and API provider.
-    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-    api_provider = os.getenv("API_PROVIDER", "openai").lower()
-    return deepseek_api_key, api_provider
+# 定数定義
+API_PROVIDERS = Literal["openai", "deepseek"]
+DEFAULT_MODEL = "gpt-3.5-turbo"
+DEEPSEEK_API_BASE = "https://api.deepseek.com"
+DEFAULT_TEMPERATURE = 0.7
 
-def prepare_messages(history: ConversationHistory) -> List[dict]:
-    """
-    Convert conversation history to the list of messages expected by the API.
-    """
-    return [{"role": role, "content": msg} for role, msg in history]
+class ConfigManager:
+    """環境変数と設定の管理を担当するクラス"""
+    
+    def __init__(self):
+        self._load_environment()
+        
+    def _load_environment(self) -> None:
+        """環境変数をロード"""
+        dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+        load_dotenv(dotenv_path)
+        
+    def get_api_keys(self) -> Tuple[Optional[str], str]:
+        """APIキーとプロバイダーを取得"""
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
+        api_provider = os.getenv("API_PROVIDER", "openai").lower()
+        return deepseek_api_key, api_provider
+
+class ChatServiceFactory:
+    """適切なチャットサービスを生成するファクトリクラス"""
+    
+    @staticmethod
+    def create_service(api_provider: API_PROVIDERS, deepseek_api_key: Optional[str]) -> "ChatService":
+        """APIプロバイダーに基づいて適切なチャットサービスを生成"""
+        if api_provider == "openai":
+            return OpenAIChatService()
+        elif api_provider == "deepseek":
+            if not deepseek_api_key:
+                raise ValueError("DeepSeek APIキーが必要です")
+            return DeepSeekChatService(deepseek_api_key)
+        raise ValueError(f"サポートされていないAPIプロバイダー: {api_provider}")
 
 class ChatService:
-    """
-    Abstract ChatService to handle chat interactions.
-    """
-    def send_chat(self, user_message: str, history: Optional[ConversationHistory]) -> Tuple[ConversationHistory, ConversationHistory]:
-        """
-        Abstract method to send a chat message and update conversation history.
-        """
-        raise NotImplementedError("send_chat must be implemented in subclass.")
+    """チャットサービスの基底クラス"""
+    
+    def send_chat(self, user_message: str, history: Optional[List[Tuple[str, str]]]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+        """チャットメッセージを送信し、会話履歴を更新"""
+        raise NotImplementedError("サブクラスで実装が必要です")
+    
+    def _prepare_messages(self, history: List[Tuple[str, str]]) -> List[dict]:
+        """会話履歴をAPI用のメッセージ形式に変換"""
+        return [{"role": role, "content": msg} for role, msg in history]
+
+    def get_model_name(self) -> str:
+        raise NotImplementedError("サブクラスで実装が必要です")
 
 class OpenAIChatService(ChatService):
-    """
-    Chat service implementation for OpenAI.
-    """
-    def send_chat(self, user_message: str, history: Optional[ConversationHistory]) -> Tuple[ConversationHistory, ConversationHistory]:
-        if history is None:
-            history = []  # Initialize history if None
-        # Add user message to conversation history.
+    """OpenAI用のチャットサービス実装"""
+    
+    def get_model_name(self) -> str:
+        return DEFAULT_MODEL
+
+    def send_chat(self, user_message: str, history: Optional[List[Tuple[str, str]]]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+        history = history or []
         history.append(("user", user_message))
-        messages = prepare_messages(history)
+        
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                temperature=0.7
+                model=DEFAULT_MODEL,
+                messages=self._prepare_messages(history),
+                temperature=DEFAULT_TEMPERATURE
             )
-            # Retrieve the assistant's reply.
             assistant_reply = response.choices[0].message.content.strip()
         except Exception as e:
-            assistant_reply = f"Error: {str(e)}"
-        # Append assistant reply to conversation history.
+            assistant_reply = f"エラーが発生しました: {str(e)}"
+            
         history.append(("assistant", assistant_reply))
         return history, history
 
 class DeepSeekChatService(ChatService):
-    """
-    Chat service implementation for DeepSeek.
-    """
+    """DeepSeek用のチャットサービス実装"""
+    
+    def get_model_name(self) -> str:
+        return "deepseek-chat" if USE_DEEPSEEK_CHAT_MODEL else "deepseek-reasoner"
+
     def __init__(self, api_key: str):
         self.api_key = api_key
-
-    def send_chat(self, user_message: str, history: Optional[ConversationHistory]) -> Tuple[ConversationHistory, ConversationHistory]:
-        if history is None:
-            history = []  # Initialize history if None
-        # Add user message to conversation history.
+        
+    def send_chat(self, user_message: str, history: Optional[List[Tuple[str, str]]]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+        history = history or []
         history.append(("user", user_message))
-        messages = prepare_messages(history)
+        
+        model_name = "deepseek-chat" if USE_DEEPSEEK_CHAT_MODEL else "deepseek-reasoner"
         try:
             response = openai.ChatCompletion.create(
                 api_key=self.api_key,
-                api_base="https://api.deepseek.com",
-                model="deepseek-chat",
-                messages=messages,
-                temperature=0.7
+                api_base=DEEPSEEK_API_BASE,
+                model=model_name,
+                messages=self._prepare_messages(history),
+                temperature=DEFAULT_TEMPERATURE
             )
-            # Retrieve the assistant's reply.
             assistant_reply = response.choices[0].message.content.strip()
         except Exception as e:
-            assistant_reply = f"Error: {str(e)}"
-        # Append assistant reply to conversation history.
+            assistant_reply = f"エラーが発生しました: {str(e)}"
+            
         history.append(("assistant", assistant_reply))
         return history, history
 
-def get_chat_service(api_provider: str, deepseek_api_key: Optional[str]) -> ChatService:
-    """
-    Factory function to get the appropriate ChatService based on the API provider.
-    """
-    if api_provider == "openai":
-        return OpenAIChatService()
-    elif api_provider == "deepseek":
-        if deepseek_api_key is None:
-            raise ValueError("DEEPSEEK_API_KEY must be provided for DeepSeek provider.")
-        return DeepSeekChatService(deepseek_api_key)
-    else:
-        raise ValueError(f"Unsupported API provider: {api_provider}")
+# 初期化処理
+config_manager = ConfigManager()
+deepseek_api_key, api_provider = config_manager.get_api_keys()
+chat_service = ChatServiceFactory.create_service(api_provider, deepseek_api_key)
 
-# Load configuration and obtain the proper chat service.
-deepseek_api_key, api_provider = load_configuration()
-chat_service = get_chat_service(api_provider, deepseek_api_key)
-
-def chat(user_message: str, history: Optional[ConversationHistory]) -> Tuple[ConversationHistory, ConversationHistory]:
-    """
-    Dispatch chat to the appropriate chat service.
-    """
+def chat(user_message: str, history: Optional[List[Tuple[str, str]]]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """チャットメッセージを処理し、更新された会話履歴を返す"""
     return chat_service.send_chat(user_message, history)
 
 # Set up Gradio UI components.
 with gr.Blocks() as demo:
     gr.Markdown("# AI Chatbot")
-    # 表示用のマークダウンコンポーネントで、使用中のAPIプロバイダーをユーザーに明示
-    gr.Markdown(f"**使用中のAIモデル API:** {api_provider.upper()}")
+    # Display the currently used API provider and model to the user.
+    gr.Markdown(f"**使用中のAIモデル:** {api_provider.upper()} ({chat_service.get_model_name()})")
     # Chatbot UI component to display conversation history.
     chatbot = gr.Chatbot(label="Chatbot")
     # Text input component.

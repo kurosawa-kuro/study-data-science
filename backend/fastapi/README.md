@@ -289,3 +289,6 @@ CREATE TABLE micropost_categories (
     micropost_id INTEGER NOT NULL REFERENCES microposts(id) ON DELETE CASCADE,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE
 );
+
+cd src/
+uvicorn main:app --reload
