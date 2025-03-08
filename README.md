@@ -1,5 +1,7 @@
 # study-data-science
 
+https://github.com/kurosawa-kuro/study-kaggle
+
 # data-services-python
 
 本ドキュメントは、Pythonを用いたデータ分析および機械学習（ML）開発の環境構築と基本操作について説明します。
